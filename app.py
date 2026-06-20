@@ -37,7 +37,7 @@ def resource_path(path):
         return os.path.join(sys._MEIPASS, path)
     return os.path.join(os.path.abspath("."), path)
 
-icon_path = resource_path("ModSync.ico")
+icon_path = resource_path("mod_sync.ico")
 
 if sys.platform.startswith("win"):
     root.iconbitmap(icon_path)
