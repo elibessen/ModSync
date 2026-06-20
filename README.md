@@ -14,7 +14,7 @@ Downloading and replacing outdated versions safely
 
 - The goal is to reduce manual maintenance and make mod management more consistent across Minecraft updates.
 
-## Requirements
+## 📦Requirements
 - Windows
 - Python 3.10+
 - Internet Connection (for remote mod sources)
@@ -22,48 +22,60 @@ Downloading and replacing outdated versions safely
 - Minecraft must have Fabric installed using the official Fabric Installer:
 https://fabricmc.net/use/installer/
 
-## Privacy
-
-- This application runs locally and does not collect or transmit personal data.
-- It accesses the local `.minecraft` folder to read installed mods and Minecraft versions, and to update mod files. This information is not transmitted anywhere.
-- Internet usage is limited to the Modrinth API for searching and downloading mod updates. No telemetry, analytics, or tracking is included.
-
-## Project Structure
+## 🧱Project Structure
 ├── app.py → UI layer (CustomTkinter) \
 ├── updater.py → Core mod detection + update logic\
 ├── config.json → Minecraft version config
 
-## Supported Mod Format
+## 🔒Privacy
+- This application runs locally and does not collect or transmit personal data.
+- It accesses the local `.minecraft` folder to read installed mods and Minecraft versions, and to update mod files. This information is not transmitted anywhere.
+- Internet usage is limited to the Modrinth API for searching and downloading mod updates. No telemetry, analytics, or tracking is included.
+
+## 🧩Supported Mod Format
 - Fabric mods only
 - `.jar` files with `fabric.mod.json` (Forge / NeoForge mods are ignored)
 
-## Safety Notes
+## 🛡️Safety Notes
 - Old mod files are removed only after successful download
 - Temporary `.tmp` files are used during download
 - No cloud or external data storage, all kept on device.
 - Only Modrinth API is used
 
-## Limitations
+## ⚠️Limitations
 - Requires mods to exist on Modrinth
 - Cannot update mods not published on Modrinth
 - Fabric only (no Forge Support)
 - Version detection depends on `.minecraft/versions`
 
-## Known Issues
+## 🐛Issue Reporting
+If you encounter a bug or unexpected behaviour, please open an issue on GitHub.
+
+Include the following information where possible:
+- Steps to reproduce the issue
+- Minecraft version being used
+- Fabric loader version
+- List of affected mods (if relevant)
+- Screenshots or error logs from the application
+- Operating system version (Windows 10/11)
+
+Do not report issues without basic reproduction steps, as they cannot be investigated effectively. You can submit issues here: [GitHub Issues](https://github.com/elibessen/ModSync/issues/new)
+
+## ⚠️Known Issues
 - Some launchers (Prism, CurseForge) may use different `.minecraft` paths
 - Custom mod folders are not detected
 - Some mod IDs may not match Modrinth project slugs perfectly
 
-## Future Improvments
+## 🔮Future Improvments
 - CurseForge/Prism launcher Support
 - Parallel downloads
 - Mod version rollback
 - GUI progress bars per mod
 
-## License
-Licensed under MIT
+## 📜License
+Licensed under [MIT](https://github.com/elibessen/ModSync/blob/main/LICENSE)
 
-## Attribution
+## 🎨Attribution
 
 This project uses the Fabric logo for UI purposes.
 All trademarks and assets belong to their respective owners.
