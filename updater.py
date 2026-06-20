@@ -4,6 +4,7 @@ import json
 import os
 import zipfile
 import sys
+import re
 
 
 API_BASE = "https://api.modrinth.com/v2"
@@ -75,8 +76,21 @@ class ModUpdater:
 
                 version_id = str(version_id)
 
-                # FILTER OUT fabric loader profiles properly
+                # FILTER OUT unwanted profiles
+                # Remove fabric loader profiles
                 if "fabric-loader" in version_id:
+                    continue
+
+                # Remove OptiFine profiles
+                if "OptiFine" in version_id:
+                    continue
+
+                # Remove snapshots (23w31a, 24w05b, etc.)
+                if re.match(r"\d+w\d+[a-z]", version_id.lower()):
+                    continue
+
+                # Remove pre-releases and release candidates
+                if re.search(r"-(pre|rc)\d*", version_id.lower()):
                     continue
 
                 versions.append(version_id)
