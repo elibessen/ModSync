@@ -62,3 +62,10 @@ https://fabricmc.net/use/installer/
 
 ## License
 Licensed under MIT
+
+## Attribution
+
+This project uses the Fabric logo for UI purposes.
+All trademarks and assets belong to their respective owners.
+
+This project is not affiliated with FabricMC or Mojang.

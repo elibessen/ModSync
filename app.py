@@ -1,4 +1,5 @@
 import customtkinter as ctk
+from PIL import Image
 import tkinter as tk
 import threading
 import json
@@ -21,6 +22,10 @@ with open(resource_path("config.json"), "r") as f:
 
 updater = ModUpdater(cfg["minecraft_version"])
 
+def resource_path(path):
+    if hasattr(sys, "_MEIPASS"):
+        return os.path.join(sys._MEIPASS, path)
+    return os.path.join(os.path.abspath("."), path)
 
 root = ctk.CTk()
 root.title("Fabric Mod Updater")
@@ -44,8 +49,24 @@ sidebar = ctk.CTkFrame(root, width=250, fg_color="#151515")
 sidebar.pack(side="left", fill="y")
 sidebar.pack_propagate(False)
 
-title = ctk.CTkLabel(sidebar, text="Fabric Updater", font=("Segoe UI", 28, "bold"))
-title.pack(pady=(40, 10))
+logo_img = ctk.CTkImage(
+    light_image=Image.open(resource_path("fabric_logo.png")),
+    dark_image=Image.open(resource_path("fabric_logo.png")),
+    size=(30, 30)
+)
+
+title_frame = ctk.CTkFrame(sidebar, fg_color="transparent")
+title_frame.pack(pady=(30, 10))
+
+logo_label = ctk.CTkLabel(title_frame, image=logo_img, text="")
+logo_label.pack(side="left", padx=(0, 5))
+
+title = ctk.CTkLabel(
+    title_frame,
+    text="Fabric Updater",
+    font=("Segoe UI", 20, "bold")
+)
+title.pack(side="left")
 
 status = ctk.CTkLabel(sidebar, text="Ready", text_color="#00cc66")
 status.pack(pady=10)
@@ -191,6 +212,11 @@ def run_update():
         log(f"Error: {e}")
 
     button.configure(state="normal")
+
+
+# ---------------- Lo ----------------
+
+
 
 
 def start():
