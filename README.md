@@ -14,13 +14,22 @@ Downloading and replacing outdated versions safely
 
 - The goal is to reduce manual maintenance and make mod management more consistent across Minecraft updates.
 
+## ⬇️ Downloading
+
+The latest version of ModSync can be downloaded from the GitHub Releases page.
+- Paper: https://github.com/elibessen/ModSync/releases/tag/v1.0.0
+
 ## 📦Requirements
 - Windows
-- Python 3.10+
-- Internet Connection (for remote mod sources)
 - Minecraft installed in standard `.minecraft` directory
 - Minecraft must have Fabric installed using the official Fabric Installer:
 https://fabricmc.net/use/installer/
+- Internet Connection (for remote mod sources)
+- Python 3.10+
+
+## 🧩Supported Mod Format
+- Fabric mods only
+- `.jar` files with `fabric.mod.json` (Forge / NeoForge mods are ignored)
 
 ## 🧱Project Structure
 ├── app.py → UI layer (CustomTkinter) \
@@ -31,10 +40,6 @@ https://fabricmc.net/use/installer/
 - This application runs locally and does not collect or transmit personal data.
 - It accesses the local `.minecraft` folder to read installed mods and Minecraft versions, and to update mod files. This information is not transmitted anywhere.
 - Internet usage is limited to the Modrinth API for searching and downloading mod updates. No telemetry, analytics, or tracking is included.
-
-## 🧩Supported Mod Format
-- Fabric mods only
-- `.jar` files with `fabric.mod.json` (Forge / NeoForge mods are ignored)
 
 ## 🛡️Safety Notes
 - Old mod files are removed only after successful download
@@ -61,7 +66,7 @@ Include the following information where possible:
 
 Do not report issues without basic reproduction steps, as they cannot be investigated effectively. You can submit issues here: [GitHub Issues](https://github.com/elibessen/ModSync/issues/new)
 
-## ⚠️Known Issues
+## ❗Known Issues
 - Some launchers (Prism, CurseForge) may use different `.minecraft` paths
 - Custom mod folders are not detected
 - Some mod IDs may not match Modrinth project slugs perfectly
