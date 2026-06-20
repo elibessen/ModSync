@@ -5,11 +5,18 @@ import json
 
 from updater import ModUpdater
 
+import os
+import sys
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
 
-with open("config.json", "r") as f:
+def resource_path(filename):
+    if hasattr(sys, "_MEIPASS"):
+        return os.path.join(sys._MEIPASS, filename)
+    return os.path.join(os.path.abspath("."), filename)
+
+with open(resource_path("config.json"), "r") as f:
     cfg = json.load(f)
 
 updater = ModUpdater(cfg["minecraft_version"])
@@ -154,6 +161,8 @@ def run_update():
     button.configure(state="disabled")
 
     clear_failed()
+
+    logbox.delete("1.0", "end")
 
     updater.set_version(version_var.get())
 
