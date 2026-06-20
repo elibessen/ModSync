@@ -85,6 +85,9 @@ class ModUpdater:
                 if "OptiFine" in version_id:
                     continue
 
+                if "snapshot" in version_id:
+                    continue
+                
                 # Remove snapshots (23w31a, 24w05b, etc.)
                 if re.match(r"\d+w\d+[a-z]", version_id.lower()):
                     continue
