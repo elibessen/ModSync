@@ -1,0 +1,62 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Build files
+build/
+dist/
+*.spec
+
+# Installer/package files
+*.egg-info/
+*.egg
+*.whl
+
+# IDEs
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment variables
+.env
+
+# Python testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# WSL/Linux temp files
+*~
+
+# Generated Minecraft files
+mods/
+downloads/
+
+# Local config overrides
+config.local.json
+
+# Executables
+*.exe
+
+# PyInstaller temp files
+*.manifest
+
+# CustomTkinter cache
+customtkinter.json
+
+Building.txt
