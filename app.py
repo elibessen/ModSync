@@ -101,7 +101,7 @@ failed_box.pack(fill="x", padx=20, pady=(0, 20))
 failed_mods = []
 
 
-# ---------------- LOGGING (FAST + STABLE) ----------------
+# ---------------- LOGGING ----------------
 
 def log(msg):
     def _write():

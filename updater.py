@@ -65,7 +65,6 @@ class ModUpdater:
 
                     version_id = data.get("id")
 
-                    # IMPORTANT FIX:
                     # fallback to inheritsFrom (used by Fabric/Forge)
                     if not version_id:
                         version_id = data.get("inheritsFrom")
