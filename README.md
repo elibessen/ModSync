@@ -17,7 +17,7 @@ Downloading and replacing outdated versions safely
 ## ⬇️ Downloading
 
 The latest version of ModSync can be downloaded from the GitHub Releases page.
-- Paper: https://github.com/elibessen/ModSync/releases/tag/v1.0.0
+- Releases: https://github.com/elibessen/ModSync/releases
 
 ## 📦Requirements
 - Windows
