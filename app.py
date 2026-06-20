@@ -27,6 +27,16 @@ root.title("Fabric Mod Updater")
 root.geometry("1250x750")
 root.configure(fg_color="#0F0F0F")
 
+def resource_path(path):
+    if hasattr(sys, "_MEIPASS"):
+        return os.path.join(sys._MEIPASS, path)
+    return os.path.join(os.path.abspath("."), path)
+
+icon_path = resource_path("ModSync.ico")
+
+if sys.platform.startswith("win"):
+    root.iconbitmap(icon_path)
+
 
 # ---------------- SIDEBAR ----------------
 
