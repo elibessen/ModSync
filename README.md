@@ -1,6 +1,6 @@
-# ModSync
+# 🔄ModSync
 
-> A lightweight desktop tool that scans, detects, and updates Minecraft Fabric Mods automatically.
+> A lightweight desktop tool that scans, detects, and updates Minecraft Fabric Mods automatically. Built in Python 🐍
 
 This project was created to simplify the process of keeping Fabric mods up to date.
 
