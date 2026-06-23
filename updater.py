@@ -11,22 +11,33 @@ API_BASE = "https://api.modrinth.com/v2"
 
 
 class ModUpdater:
+
     def __init__(self, minecraft_version):
         self.mc_version = minecraft_version
         self.mods_folder = self.detect_folder()
         self.cache = {}
+        self.progress_callback = None
+
 
     # ---------------- VERSION ----------------
 
-    def set_version(self, v):
-        self.mc_version = v
+    def set_version(self, version):
+        self.mc_version = version
+
 
     def get_minecraft_root(self):
-        if sys.platform.startswith("win"):
-            return os.path.join(os.environ["APPDATA"], ".minecraft")
 
+        if sys.platform.startswith("win"):
+            return os.path.join(
+                os.environ["APPDATA"],
+                ".minecraft"
+            )
+
+        # WSL support
         if os.path.exists("/mnt/c/Users"):
+
             for user in os.listdir("/mnt/c/Users"):
+
                 path = os.path.join(
                     "/mnt/c/Users",
                     user,
@@ -34,229 +45,506 @@ class ModUpdater:
                     "Roaming",
                     ".minecraft"
                 )
+
                 if os.path.exists(path):
                     return path
 
-        return os.path.join(os.path.expanduser("~"), ".minecraft")
+        return os.path.join(
+            os.path.expanduser("~"),
+            ".minecraft"
+        )
+
 
     def get_installed_versions(self):
-        root = self.get_minecraft_root()
-        versions_path = os.path.join(root, "versions")
 
-        if not os.path.exists(versions_path):
+        root = self.get_minecraft_root()
+
+        versions_path = os.path.join(
+            root,
+            "versions"
+        )
+
+        if not os.path.exists(
+            versions_path
+        ):
             return []
 
         versions = []
 
-        for folder in os.listdir(versions_path):
-            folder_path = os.path.join(versions_path, folder)
+        for folder in os.listdir(
+            versions_path
+        ):
 
-            if not os.path.isdir(folder_path):
+            folder_path = os.path.join(
+                versions_path,
+                folder
+            )
+
+            if not os.path.isdir(
+                folder_path
+            ):
                 continue
 
-            json_file = os.path.join(folder_path, f"{folder}.json")
+            json_file = os.path.join(
+                folder_path,
+                f"{folder}.json"
+            )
 
             version_id = None
 
             try:
-                # Preferred: read real Minecraft version id from JSON
-                if os.path.exists(json_file):
-                    with open(json_file, "r", encoding="utf-8") as f:
-                        data = json.load(f)
 
-                    version_id = data.get("id")
+                if os.path.exists(
+                    json_file
+                ):
 
-                    # fallback to inheritsFrom (used by Fabric/Forge)
+                    with open(
+                        json_file,
+                        "r",
+                        encoding="utf-8"
+                    ) as f:
+
+                        data = json.load(
+                            f
+                        )
+
+                    version_id = (
+                        data.get("id")
+                    )
+
                     if not version_id:
-                        version_id = data.get("inheritsFrom")
+                        version_id = (
+                            data.get(
+                                "inheritsFrom"
+                            )
+                        )
 
-                # fallback to folder name
                 if not version_id:
                     version_id = folder
 
-                version_id = str(version_id)
+                version_id = str(
+                    version_id
+                )
 
-                # FILTER OUT unwanted profiles
-                # Remove fabric loader profiles
-                if "fabric-loader" in version_id:
+                version_lower = (
+                    version_id.lower()
+                )
+
+                # Remove Fabric loader entries
+                if (
+                    "fabric-loader"
+                    in version_lower
+                ):
                     continue
 
-                # Remove OptiFine profiles
-                if "OptiFine" in version_id:
+                # Remove OptiFine
+                if (
+                    "optifine"
+                    in version_lower
+                ):
                     continue
 
-                if "snapshot" in version_id:
-                    continue
-                
-                # Remove snapshots (23w31a, 24w05b, etc.)
-                if re.match(r"\d+w\d+[a-z]", version_id.lower()):
-                    continue
-
-                # Remove pre-releases and release candidates
-                if re.search(r"-(pre|rc)\d*", version_id.lower()):
+                # Remove named snapshots
+                if (
+                    "snapshot"
+                    in version_lower
+                ):
                     continue
 
-                versions.append(version_id)
+                # Remove 23w31a etc
+                if re.match(
+                    r"\d+w\d+[a-z]",
+                    version_lower
+                ):
+                    continue
+
+                # Remove pre/rc
+                if re.search(
+                    r"-(pre|rc)\d*",
+                    version_lower
+                ):
+                    continue
+
+                versions.append(
+                    version_id
+                )
 
             except:
-                # last resort fallback
-                if "fabric-loader" not in folder:
-                    versions.append(folder)
 
-        # remove duplicates (preserve order)
+                continue
+
+        # Remove duplicates while preserving order
+
         seen = set()
+
         clean = []
-        for v in versions:
-            if v not in seen:
-                seen.add(v)
-                clean.append(v)
+
+        for version in versions:
+
+            if version not in seen:
+
+                seen.add(
+                    version
+                )
+
+                clean.append(
+                    version
+                )
 
         return clean
+
 
     # ---------------- PATH ----------------
 
     def detect_folder(self):
-        root = self.get_minecraft_root()
-        mods_path = os.path.join(root, "mods")
 
-        if os.path.isdir(mods_path):
+        root = self.get_minecraft_root()
+
+        mods_path = os.path.join(
+            root,
+            "mods"
+        )
+
+        if os.path.isdir(
+            mods_path
+        ):
             return mods_path
 
-        raise Exception(f"Mods folder not found: {mods_path}")
+        raise Exception(
+            f"Mods folder not found: {mods_path}"
+        )
+
 
     # ---------------- MOD DETECTION ----------------
 
-    def detect_mods(self, log):
+    def detect_mods(
+        self,
+        log
+    ):
+
         mods = []
 
-        log(f"Mods folder: {self.mods_folder}\n")
+        log(
+            f"Mods folder: {self.mods_folder}"
+        )
 
-        for file in os.listdir(self.mods_folder):
-            if not file.endswith(".jar"):
+        for file in os.listdir(
+            self.mods_folder
+        ):
+
+            if not file.endswith(
+                ".jar"
+            ):
                 continue
 
-            path = os.path.join(self.mods_folder, file)
+            path = os.path.join(
+                self.mods_folder,
+                file
+            )
 
             try:
-                with zipfile.ZipFile(path, "r") as jar:
-                    if "fabric.mod.json" not in jar.namelist():
+
+                with zipfile.ZipFile(
+                    path,
+                    "r"
+                ) as jar:
+
+                    if (
+                        "fabric.mod.json"
+                        not in jar.namelist()
+                    ):
                         continue
 
-                    data = json.loads(jar.read("fabric.mod.json"))
+                    data = json.loads(
+                        jar.read(
+                            "fabric.mod.json"
+                        )
+                    )
 
-                    mod_id = data.get("id")
-                    mod_version = data.get("version")
+                    mod_id = data.get(
+                        "id"
+                    )
+
+                    mod_version = data.get(
+                        "version"
+                    )
 
                     if mod_id:
+
                         mods.append({
                             "id": mod_id,
                             "version": mod_version,
                             "file": file
                         })
 
-                        log(f"Detected: {mod_id}")
+                        log(
+                            f"Detected: {mod_id}"
+                        )
 
             except:
-                log(f"Skipped {file}")
+
+                log(
+                    f"Skipped {file}"
+                )
 
         return mods
 
+
     # ---------------- MODRINTH ----------------
 
-    def search_project(self, mod_id):
+    def search_project(
+        self,
+        mod_id
+    ):
+
         if mod_id in self.cache:
-            return self.cache[mod_id]
+            return self.cache[
+                mod_id
+            ]
 
-        url = f"{API_BASE}/search?{urllib.parse.urlencode({'query': mod_id})}"
+        url = (
+            f"{API_BASE}/search?"
+            f"{urllib.parse.urlencode({'query': mod_id})}"
+        )
 
-        with urllib.request.urlopen(url, timeout=10) as r:
-            data = json.loads(r.read().decode())
+        with urllib.request.urlopen(
+            url,
+            timeout=10
+        ) as r:
 
-        hits = data.get("hits", [])
+            data = json.loads(
+                r.read().decode()
+            )
+
+        hits = data.get(
+            "hits",
+            []
+        )
+
         if not hits:
             return None
 
-        pid = hits[0]["project_id"]
-        self.cache[mod_id] = pid
-        return pid
+        project_id = hits[
+            0
+        ]["project_id"]
 
-    def get_latest_version(self, project_id):
+        self.cache[
+            mod_id
+        ] = project_id
+
+        return project_id
+
+
+    def get_latest_version(
+        self,
+        project_id
+    ):
+
         params = urllib.parse.urlencode({
-            "loaders": json.dumps(["fabric"]),
-            "game_versions": json.dumps([self.mc_version])
+            "loaders": json.dumps(
+                ["fabric"]
+            ),
+            "game_versions": json.dumps(
+                [self.mc_version]
+            )
         })
 
-        url = f"{API_BASE}/project/{project_id}/version?{params}"
+        url = (
+            f"{API_BASE}/project/"
+            f"{project_id}/version?"
+            f"{params}"
+        )
 
-        with urllib.request.urlopen(url, timeout=10) as r:
-            data = json.loads(r.read().decode())
+        with urllib.request.urlopen(
+            url,
+            timeout=10
+        ) as r:
+
+            data = json.loads(
+                r.read().decode()
+            )
 
         if not data:
             return None
 
         return data[0]
 
-    # ---------------- UPDATE CORE ----------------
 
-    def update(self, log, on_fail=None):
-        mods = self.detect_mods(log)
+    # ---------------- UPDATE ----------------
 
-        log(f"\nFound {len(mods)} mods\n")
+    def update(
+        self,
+        log,
+        on_fail=None
+    ):
+
+        mods = self.detect_mods(
+            log
+        )
+
+        log(
+            f"\nFound {len(mods)} mods\n"
+        )
 
         for mod in mods:
+
             mod_id = mod["id"]
+
             old_file = mod["file"]
 
-            log(f"Checking {mod_id}")
+            log(
+                f"Checking {mod_id}"
+            )
 
-            project_id = self.search_project(mod_id)
+            project_id = self.search_project(
+                mod_id
+            )
 
             if not project_id:
-                log(f"[NOT FOUND] {mod_id}\n")
+
+                log(
+                    f"[NOT FOUND] {mod_id}"
+                )
+
                 if on_fail:
-                    on_fail(mod_id, "Not found on Modrinth")
+                    on_fail(
+                        mod_id,
+                        "Not found on Modrinth"
+                    )
+
                 continue
 
-            latest = self.get_latest_version(project_id)
+            latest = self.get_latest_version(
+                project_id
+            )
 
             if not latest:
-                log(f"[SKIP] {mod_id}\n")
+
+                log(
+                    f"[SKIP] {mod_id}"
+                )
+
                 if on_fail:
-                    on_fail(mod_id, "No compatible version")
+                    on_fail(
+                        mod_id,
+                        "No compatible version"
+                    )
+
                 continue
 
-            file_info = latest["files"][0]
+            file_info = latest[
+                "files"
+            ][0]
 
-            old_path = os.path.join(self.mods_folder, old_file)
-            new_name = file_info["filename"]
-            new_path = os.path.join(self.mods_folder, new_name)
-            tmp_path = new_path + ".tmp"
+            old_path = os.path.join(
+                self.mods_folder,
+                old_file
+            )
+
+            new_name = file_info[
+                "filename"
+            ]
+
+            new_path = os.path.join(
+                self.mods_folder,
+                new_name
+            )
+
+            tmp_path = (
+                new_path
+                + ".tmp"
+            )
 
             try:
-                data = urllib.request.urlopen(file_info["url"], timeout=30).read()
 
-                with open(tmp_path, "wb") as f:
-                    f.write(data)
+                response = urllib.request.urlopen(
+                    file_info["url"],
+                    timeout=30
+                )
 
-                if len(data) < 1000:
-                    log(f"[ERROR] {mod_id} invalid file\n")
-                    if on_fail:
-                        on_fail(mod_id, "Corrupt download")
-                    continue
+                total = int(
+                    response.headers.get(
+                        "Content-Length",
+                        0
+                    )
+                )
 
-                if os.path.exists(old_path):
-                    os.remove(old_path)
+                downloaded = 0
 
-                os.rename(tmp_path, new_path)
+                chunk_size = 8192
 
-                log(f"[OK] Installed {new_name}\n")
+                with open(
+                    tmp_path,
+                    "wb"
+                ) as f:
+
+                    while True:
+
+                        chunk = response.read(
+                            chunk_size
+                        )
+
+                        if not chunk:
+                            break
+
+                        f.write(
+                            chunk
+                        )
+
+                        downloaded += len(
+                            chunk
+                        )
+
+                        if self.progress_callback:
+
+                            self.progress_callback(
+                                mod_id,
+                                downloaded,
+                                total
+                            )
+
+                if os.path.getsize(
+                    tmp_path
+                ) < 1000:
+
+                    raise Exception(
+                        "Corrupt download"
+                    )
+
+                if os.path.exists(
+                    old_path
+                ):
+                    os.remove(
+                        old_path
+                    )
+
+                os.rename(
+                    tmp_path,
+                    new_path
+                )
+
+                log(
+                    f"[OK] Installed {new_name}"
+                )
 
             except Exception as e:
-                log(f"[ERROR] {mod_id}: {e}\n")
-                if on_fail:
-                    on_fail(mod_id, str(e))
 
-                if os.path.exists(tmp_path):
-                    os.remove(tmp_path)
+                log(
+                    f"[ERROR] {mod_id}: {e}"
+                )
+
+                if on_fail:
+
+                    on_fail(
+                        mod_id,
+                        str(e)
+                    )
+
+                if os.path.exists(
+                    tmp_path
+                ):
+                    os.remove(
+                        tmp_path
+                    )
 
         log("\nFinished")
