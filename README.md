@@ -71,11 +71,22 @@ Do not report issues without basic reproduction steps, as they cannot be investi
 - Custom mod folders are not detected
 - Some mod IDs may not match Modrinth project slugs perfectly
 
-## 🔮Future Improvments
-- CurseForge/Prism launcher Support
-- Parallel downloads
-- Mod version rollback
-- GUI progress bars per mod
+## 📋 Future Features
+
+| Feature | Status | Notes |
+|----------|---------|-------|
+| CurseForge support | ⏳ Planned | Add update support for mods hosted outside Modrinth |
+| Prism Launcher support | ⏳ Planned | Detect custom launcher `.minecraft` paths |
+| Custom mods folder selection | ⏳ Planned | Allow users to choose alternative mod directories |
+| Parallel downloads | ⏳ Planned | Download multiple mod updates simultaneously |
+| Mod rollback | ⏳ Planned | Restore previous versions if an update fails |
+| Backup system | ⏳ Planned | Create backups before replacing mod files |
+| Search and install mods | ⏳ Planned | Install new mods directly from Modrinth |
+| Settings page | ⏳ Planned | Configure update behaviour and preferences |
+| Dark/light theme selection | ⏳ Planned | User-selectable appearance modes |
+| Mod details view | ⏳ Planned | Display installed versions and update information |
+| Better launcher detection | ⏳ Planned | Support MultiMC, Prism, CurseForge, and others |
+| Linux support | ⏳ Planned | Native packaged build support |
 
 ## 📜License
 Licensed under [MIT](https://github.com/elibessen/ModSync/blob/main/LICENSE)
