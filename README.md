@@ -1,6 +1,6 @@
 # 🔄ModSync
 
-> A lightweight desktop tool that scans, detects, and updates Minecraft Fabric Mods automatically. Built in Python 🐍
+> A lightweight desktop tool that scans, detects, and updates Minecraft Fabric Mods automatically. Built in Python.
 
 This project was created to simplify the process of keeping Fabric mods up to date.
 
@@ -14,12 +14,12 @@ Downloading and replacing outdated versions safely
 
 - The goal is to reduce manual maintenance and make mod management more consistent across Minecraft updates.
 
-## ⬇️ Downloading
+## Downloading
 
 The latest version of ModSync can be downloaded from the GitHub Releases page.
 - Releases: https://github.com/elibessen/ModSync/releases
 
-## 📦Requirements
+## Requirements
 - Windows
 - Minecraft installed in standard `.minecraft` directory
 - Minecraft must have Fabric installed using the official Fabric Installer:
@@ -27,33 +27,33 @@ https://fabricmc.net/use/installer/
 - Internet Connection (for remote mod sources)
 - Python 3.10+
 
-## 🧩Supported Mod Format
+## Supported Mod Format
 - Fabric mods only
 - `.jar` files with `fabric.mod.json` (Forge / NeoForge mods are ignored)
 
-## 🧱Project Structure
+## Project Structure
 ├── app.py → UI layer (CustomTkinter) \
 ├── updater.py → Core mod detection + update logic\
 ├── config.json → Minecraft version config
 
-## 🔒Privacy
+## Privacy
 - This application runs locally and does not collect or transmit personal data.
 - It accesses the local `.minecraft` folder to read installed mods and Minecraft versions, and to update mod files. This information is not transmitted anywhere.
 - Internet usage is limited to the Modrinth API for searching and downloading mod updates. No telemetry, analytics, or tracking is included.
 
-## 🛡️Safety Notes
+## Safety Notes
 - Old mod files are removed only after successful download
 - Temporary `.tmp` files are used during download
 - No cloud or external data storage, all kept on device.
 - Only Modrinth API is used
 
-## ⚠️Limitations
+## Limitations
 - Requires mods to exist on Modrinth
 - Cannot update mods not published on Modrinth
 - Fabric only (no Forge Support)
 - Version detection depends on `.minecraft/versions`
 
-## 🐛Issue Reporting
+## Issue Reporting
 If you encounter a bug or unexpected behaviour, please open an issue on GitHub.
 
 Include the following information where possible:
@@ -71,27 +71,27 @@ Do not report issues without basic reproduction steps, as they cannot be investi
 - Custom mod folders are not detected
 - Some mod IDs may not match Modrinth project slugs perfectly
 
-## 📋 Future Features
+## Future Features
 
 | Feature | Status | Notes |
 |----------|---------|-------|
-| CurseForge support | ⏳ Planned | Add update support for mods hosted outside Modrinth |
-| Prism Launcher support | ⏳ Planned | Detect custom launcher `.minecraft` paths |
-| Custom mods folder selection | ⏳ Planned | Allow users to choose alternative mod directories |
-| Parallel downloads | ⏳ Planned | Download multiple mod updates simultaneously |
-| Mod rollback | ⏳ Planned | Restore previous versions if an update fails |
-| Backup system | ⏳ Planned | Create backups before replacing mod files |
-| Search and install mods | ⏳ Planned | Install new mods directly from Modrinth |
-| Settings page | ⏳ Planned | Configure update behaviour and preferences |
-| Dark/light theme selection | ⏳ Planned | User-selectable appearance modes |
-| Mod details view | ⏳ Planned | Display installed versions and update information |
-| Better launcher detection | ⏳ Planned | Support MultiMC, Prism, CurseForge, and others |
-| Linux support | ⏳ Planned | Native packaged build support |
+| CurseForge support | Planned | Add update support for mods hosted outside Modrinth |
+| Prism Launcher support | Planned | Detect custom launcher `.minecraft` paths |
+| Custom mods folder selection | Planned | Allow users to choose alternative mod directories |
+| Parallel downloads | Planned | Download multiple mod updates simultaneously |
+| Mod rollback | Planned | Restore previous versions if an update fails |
+| Backup system | Planned | Create backups before replacing mod files |
+| Search and install mods | Planned | Install new mods directly from Modrinth |
+| Settings page | Planned | Configure update behaviour and preferences |
+| Dark/light theme selection | Planned | User-selectable appearance modes |
+| Mod details view | Planned | Display installed versions and update information |
+| Better launcher detection | Planned | Support MultiMC, Prism, CurseForge, and others |
+| Linux support | Planned | Native packaged build support |
 
-## 📜License
+## License
 Licensed under [MIT](https://github.com/elibessen/ModSync/blob/main/LICENSE)
 
-## 🎨Attribution
+## Attribution
 
 This project uses the Fabric logo for UI purposes.
 All trademarks and assets belong to their respective owners.
