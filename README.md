@@ -32,6 +32,17 @@ https://fabricmc.net/use/installer/
 - Internet Connection (for remote mod sources)
 - Python 3.10+
 
+## Overall Goal
+
+Keep ModSync lightweight while improving:
+
+- Reliability
+- Error handling
+- File safety
+- Code readability
+- Maintainability
+- Testability
+
 ## Supported Mod Format
 - Fabric mods only
 - `.jar` files with `fabric.mod.json` (Forge / NeoForge mods are ignored)
