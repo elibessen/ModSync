@@ -1,4 +1,9 @@
 # 🔄ModSync
+![GitHub Release](https://img.shields.io/github/v/release/elibessen/ModSync)
+![GitHub License](https://img.shields.io/github/license/elibessen/ModSync)
+![GitHub Issues](https://img.shields.io/github/issues/elibessen/ModSync)
+![GitHub Issues](https://img.shields.io/github/issues-closed/elibessen/ModSync)
+
 
 > A lightweight desktop tool that scans, detects, and updates Minecraft Fabric Mods automatically. Built in Python.
 
