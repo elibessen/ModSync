@@ -82,7 +82,7 @@ Include the following information where possible:
 
 Do not report issues without basic reproduction steps, as they cannot be investigated effectively. You can submit issues here: [GitHub Issues](https://github.com/elibessen/ModSync/issues/new)
 
-## ❗Known Issues
+## Known Issues
 - Some launchers (Prism, CurseForge) may use different `.minecraft` paths
 - Custom mod folders are not detected
 - Some mod IDs may not match Modrinth project slugs perfectly
