@@ -19,7 +19,7 @@ import os
 import sys
 from updater import ModUpdater
 
-APP_VERSION = "1.2.0"
+APP_VERSION = "1.2.1"
 
 class ModSyncApp:
     def __init__(self):
