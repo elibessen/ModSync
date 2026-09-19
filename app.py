@@ -66,17 +66,10 @@ class ModSyncApp:
                 sys._MEIPASS,
                 path
             )
-        return os.path.join(
-            os.path.abspath("."),
-            path
-        )
+        return os.path.join(os.path.abspath("."), path)
 
     def load_config(self):
-        with open(
-            self.resource_path("config.json"),
-            "r"
-        ) as f:
-
+        with open(self.resource_path("config.json"),"r") as f:
             self.cfg = json.load(f)
 
     def create_sidebar(self):
@@ -330,12 +323,7 @@ class ModSyncApp:
             _write
         )
 
-    def update_progress(
-        self,
-        mod_id,
-        current,
-        total
-    ):
+    def update_progress( self, mod_id, current, total):
         if not self.app_running:
             return
         if total <= 0:
@@ -344,13 +332,8 @@ class ModSyncApp:
             (current / total) * 100
         )
         width = 22
-        filled = int(
-            (percent / 100) * width
-        )
-        bar = (
-            "#" * filled
-            + "-" * (width - filled)
-        )
+        filled = int((percent / 100) * width)
+        bar = ("#" * filled + "-" * (width - filled))
         text = (
             f"{mod_id:<18} "
             f"[{bar}] "
@@ -390,10 +373,7 @@ class ModSyncApp:
             _write
         )
 
-    def add_fail(
-        self,
-        mod,
-        reason
+    def add_fail(self, mod, reason
     ):
         self.failed_mods.append(
             (mod, reason)
@@ -420,11 +400,7 @@ class ModSyncApp:
             "1.0",
             "end"
         )
-    def set_status(
-        self,
-        text,
-        color
-    ):
+    def set_status(self, text, color):
         def _update():
             if not self.app_running:
                 return

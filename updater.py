@@ -9,6 +9,10 @@ import hashlib
 
 API_BASE = "https://api.modrinth.com/v2"
 
+MODRINTH_SLUGS = {
+    "betterclouds": "better-clouds"
+}
+
 class ModUpdater:
 
     def __init__(self, minecraft_version):
@@ -23,11 +27,9 @@ class ModUpdater:
         self.mc_version = version
 
     def get_minecraft_root(self):
+
         if sys.platform.startswith("win"):
-            return os.path.join(
-                os.environ["APPDATA"],
-                ".minecraft"
-            )
+            return os.path.join(os.environ["APPDATA"], ".minecraft")
 
         # WSL support
 
@@ -40,55 +42,29 @@ class ModUpdater:
                     "Roaming",
                     ".minecraft"
                 )
-
                 if os.path.exists(path):
                     return path
-
-        return os.path.join(
-            os.path.expanduser("~"),
-            ".minecraft"
-        )
+        return os.path.join(os.path.expanduser("~"), ".minecraft")
 
     def get_installed_versions(self):
+
         root = self.get_minecraft_root()
+        versions_path = os.path.join(root, "versions")
 
-        versions_path = os.path.join(
-            root,
-            "versions"
-        )
-
-        if not os.path.exists(
-            versions_path
-        ):
+        if not os.path.exists(versions_path):
             return []
 
         versions = []
 
-        for folder in os.listdir(
-            versions_path
-        ):
-            folder_path = os.path.join(
-                versions_path,
-                folder
-            )
-
-            if not os.path.isdir(
-                folder_path
-            ):
+        for folder in os.listdir(versions_path):
+            folder_path = os.path.join(versions_path, folder)
+            if not os.path.isdir(folder_path):
                 continue
-
-            json_file = os.path.join(
-                folder_path,
-                f"{folder}.json"
-            )
-
+            json_file = os.path.join(folder_path, f"{folder}.json")
             version_id = None
 
             try:
-
-                if os.path.exists(
-                    json_file
-                ):
+                if os.path.exists(json_file):
                     with open(
                         json_file,
                         "r",
@@ -96,64 +72,38 @@ class ModUpdater:
                     ) as f:
                         data = json.load(f)
 
-                    version_id = data.get(
-                        "id"
-                    )
+                    version_id = data.get("id")
 
                     if not version_id:
-                        version_id = data.get(
-                            "inheritsFrom"
-                        )
+                        version_id = data.get("inheritsFrom")
 
                 if not version_id:
                     version_id = folder
 
-                version_id = str(
-                    version_id
-                )
-
-                version_lower = (
-                    version_id.lower()
-                )
+                version_id = str(version_id)
+                version_lower = version_id.lower()
 
                 # Remove Fabric loader entries
-                if (
-                    "fabric-loader"
-                    in version_lower
-                ):
-                    continue
+
+                if "fabric-loader" in version_lower: continue
 
                 # Remove OptiFine
-                if (
-                    "optifine"
-                    in version_lower
-                ):
-                    continue
+
+                if "optifine" in version_lower: continue
 
                 # Remove named snapshots
-                if (
-                    "snapshot"
-                    in version_lower
-                ):
-                    continue
+
+                if "snapshot" in version_lower: continue
 
                 # Remove 23w31a etc
-                if re.match(
-                    r"\d+w\d+[a-z]",
-                    version_lower
-                ):
-                    continue
+
+                if re.match(r"\d+w\d+[a-z]", version_lower): continue
 
                 # Remove pre/rc
-                if re.search(
-                    r"-(pre|rc)\d*",
-                    version_lower
-                ):
-                    continue
 
-                versions.append(
-                    version_id
-                )
+                if re.search(r"-(pre|rc)\d*", version_lower): continue
+
+                versions.append(version_id)
 
             except Exception:
                 continue
@@ -165,84 +115,44 @@ class ModUpdater:
 
         for version in versions:
             if version not in seen:
-                seen.add(
-                    version
-                )
-                clean.append(
-                    version
-                )
-
+                seen.add(version)
+                clean.append(version)
         return clean
 
     # Path
 
     def detect_folder(self):
+
         root = self.get_minecraft_root()
+        mods_path = os.path.join(root, "mods" )
 
-        mods_path = os.path.join(
-            root,
-            "mods"
-        )
-
-        if os.path.isdir(
-            mods_path
-        ):
+        if os.path.isdir(mods_path):
             return mods_path
-
         raise Exception(
             f"Mods folder not found: {mods_path}"
         )
 
     # Mod detection
 
-    def detect_mods(
-        self,
-        log
-    ):
+    def detect_mods(self, log):
+
         mods = []
+        log(f"Mods folder: {self.mods_folder}")
 
-        log(
-            f"Mods folder: {self.mods_folder}"
-        )
-
-        for file in os.listdir(
-            self.mods_folder
-        ):
-            if not file.endswith(
-                ".jar"
-            ):
+        for file in os.listdir(self.mods_folder):
+            if not file.endswith(".jar"):
                 continue
-
-            path = os.path.join(
-                self.mods_folder,
-                file
-            )
-
+            path = os.path.join(self.mods_folder, file)
             try:
-                with zipfile.ZipFile(
-                    path,
-                    "r"
-                ) as jar:
-
-                    if (
-                        "fabric.mod.json"
-                        not in jar.namelist()
-                    ):
+                with zipfile.ZipFile(path, "r") as jar:
+                    if "fabric.mod.json" not in jar.namelist():
                         continue
-
                     data = json.loads(
-                        jar.read(
-                            "fabric.mod.json"
-                        )
+                        jar.read("fabric.mod.json")
                     )
 
-                    mod_id = data.get(
-                        "id"
-                    )
-
-                    mod_version = data.get(
-                        "version"
-                    )
+                    mod_id = data.get("id")
+                    mod_version = data.get("version")
 
                     if mod_id:
                         mods.append({
@@ -250,72 +160,78 @@ class ModUpdater:
                             "version": mod_version,
                             "file": file
                         })
-
-                        log(
-                            f"Detected: {mod_id}"
-                        )
+                        log(f"Detected: {mod_id}")
 
             except Exception as e:
-                log(
-                    f"Skipped {file}: {e}"
-                )
+                log(f"Skipped {file}: {e}")
 
         return mods
 
-    # Modrinth
+    # Modrinth search
 
-    def search_project(
-        self,
-        mod_id
-    ):
+    def search_project(self, mod_id):
+
         if mod_id in self.cache:
-            return self.cache[
-                mod_id
-            ]
+            return self.cache[mod_id]
+
+        project_slug = MODRINTH_SLUGS.get(mod_id)
+
+        if project_slug:
+            self.cache[mod_id] = project_slug
+            return project_slug
 
         url = (
             f"{API_BASE}/search?"
             f"{urllib.parse.urlencode({'query': mod_id})}"
         )
 
-        with urllib.request.urlopen(
-            url,
-            timeout=10
-        ) as r:
+        with urllib.request.urlopen(url, timeout=10) as r:
+            data = json.loads(r.read().decode())
 
-            data = json.loads(
-                r.read().decode()
-            )
-
-        hits = data.get(
-            "hits",
-            []
-        )
+        hits = data.get("hits", [])
 
         if not hits:
-            return None
 
-        project_id = hits[
-            0
-        ]["project_id"]
+            normalised_mod_id = mod_id.lower().replace("_", "-")
+            if normalised_mod_id != mod_id.lower():
 
-        self.cache[
-            mod_id
-        ] = project_id
+                url = (
+                    f"{API_BASE}/search?"
+                    f"{urllib.parse.urlencode({'query': normalised_mod_id})}"
+                )
 
-        return project_id
+                with urllib.request.urlopen(url, timeout=10) as r:
+                    data = json.loads(
+                        r.read().decode()
+                    )
+                hits = data.get("hits", [])
 
-    def get_latest_version(
-        self,
-        project_id
-    ):
+            if not hits:
+                return None
+
+        mod_id_lower = mod_id.lower()
+        normalised_mod_id = mod_id_lower.replace("_", "-")
+
+        for project in hits:
+
+            slug = project.get("slug", "")
+            project_id = project.get("project_id")
+
+            if slug.lower() == mod_id_lower:
+                self.cache[mod_id] = project_id
+                return project_id
+
+            if slug.lower() == normalised_mod_id:
+                self.cache[mod_id] = project_id
+                return project_id
+
+        return None
+
+    def get_latest_version(self, project_id):
+
         params = urllib.parse.urlencode({
-            "loaders": json.dumps(
-                ["fabric"]
-            ),
-            "game_versions": json.dumps(
-                [self.mc_version]
-            )
+            "loaders": json.dumps(["fabric"]),
+            "game_versions": json.dumps([self.mc_version])
         })
 
         url = (
@@ -324,24 +240,15 @@ class ModUpdater:
             f"{params}"
         )
 
-        with urllib.request.urlopen(
-            url,
-            timeout=10
-        ) as r:
-
+        with urllib.request.urlopen(url, timeout=10) as r:
             data = json.loads(
                 r.read().decode()
             )
-
         if not data:
             return None
 
         for version in data:
-            game_versions = version.get(
-                "game_versions",
-                []
-            )
-
+            game_versions = version.get("game_versions", [])
             if self.mc_version in game_versions:
                 return version
 
@@ -349,200 +256,109 @@ class ModUpdater:
 
     # File hash
 
-    def get_file_hash(
-        self,
-        file_path
-    ):
+    def get_file_hash(self, file_path):
+
         sha512 = hashlib.sha512()
 
-        with open(
-            file_path,
-            "rb"
-        ) as f:
-
+        with open(file_path, "rb") as f:
             while True:
-                chunk = f.read(
-                    8192
-                )
-
+                chunk = f.read(8192)
                 if not chunk:
                     break
-
-                sha512.update(
-                    chunk
-                )
-
+                sha512.update(chunk)
         return sha512.hexdigest()
 
     # Update
 
-    def update(
-        self,
-        log,
-        on_fail=None
-    ):
-        mods = self.detect_mods(
-            log
-        )
+    def update(self, log, on_fail=None):
+        mods = self.detect_mods(log)
 
-        log(
-            f"\nFound {len(mods)} mods\n"
-        )
+        log(f"\nFound {len(mods)} mods\n")
 
         for mod in mods:
             mod_id = mod["id"]
             old_file = mod["file"]
+            log(f"Checking {mod_id}")
 
-            log(
-                f"Checking {mod_id}"
-            )
-
-            project_id = self.search_project(
-                mod_id
-            )
-
+            try:
+                project_id = self.search_project(mod_id)
+            except Exception as e:
+                log(f"[ERROR] Searching {mod_id}: {e}")
+                continue
             if not project_id:
-                log(
-                    f"[NOT FOUND] {mod_id}"
-                )
-
+                log(f"[NOT FOUND] {mod_id}")
                 if on_fail:
-                    on_fail(
-                        mod_id,
-                        "Not found on Modrinth"
-                    )
+                    on_fail( mod_id, "Not found on Modrinth")
+                continue
+            try:
+                latest = self.get_latest_version(project_id)
 
+            except Exception as e:
+                log(f"[ERROR] Getting version for {mod_id}: {e}")
                 continue
 
-            latest = self.get_latest_version(
-                project_id
-            )
-
             if not latest:
-                log(
-                    f"[SKIP] {mod_id}"
-                )
-
+                log(f"[SKIP] {mod_id}")
                 if on_fail:
-                    on_fail(
-                        mod_id,
-                        "No compatible version"
-                    )
-
+                    on_fail(mod_id, "No compatible version")
                 continue
 
             file_info = None
 
             # Find the primary file
 
-            for file in latest.get(
-                "files",
-                []
-            ):
-                if file.get(
-                    "primary",
-                    False
-                ):
+            for file in latest.get("files", []):
+                if file.get("primary", False):
                     file_info = file
                     break
 
             # Fall back to the first file
 
             if not file_info:
-                files = latest.get(
-                    "files",
-                    []
-                )
+                files = latest.get("files", [])
                 if files:
                     file_info = files[0]
 
             if not file_info:
-                log(
-                    f"[SKIP] {mod_id}"
-                )
-
+                log(f"[SKIP] {mod_id}")
                 if on_fail:
-                    on_fail(
-                        mod_id,
-                        "No downloadable file"
-                    )
-
+                    on_fail(mod_id,"No downloadable file")
                 continue
 
-            old_path = os.path.join(
-                self.mods_folder,
-                old_file
-            )
-            new_name = file_info[
-                "filename"
-            ]
-            new_path = os.path.join(
-                self.mods_folder,
-                new_name
-            )
-            tmp_path = (
-                new_path
-                + ".tmp"
-            )
+            old_path = os.path.join(self.mods_folder,old_file)
+            new_name = file_info["filename"]
+            new_path = os.path.join(self.mods_folder, new_name)
+            tmp_path = new_path + ".tmp"
 
-            # Check if the installed file is already exactly the same as the Modrinth file.
+            # Check if the installed file is already
+            # exactly the same as the Modrinth file.
 
-            remote_hash = file_info.get(
-                "hashes",
-                {}
-            ).get(
-                "sha512"
-            )
+            remote_hash = file_info.get("hashes", {}).get("sha512")
 
-            if (
-                remote_hash
-                and os.path.exists(old_path)
-            ):
-                local_hash = self.get_file_hash(
-                    old_path
-                )
-
+            if remote_hash and os.path.exists(old_path):
+                local_hash = self.get_file_hash(old_path)
                 if local_hash == remote_hash:
                     log(
                         f"[UP TO DATE] "
                         f"{mod_id} {mod['version']}"
                     )
-
                     continue
             try:
-                with urllib.request.urlopen(
-                    file_info["url"],
-                    timeout=30
+                with urllib.request.urlopen(file_info["url"], timeout=30
                 ) as response:
-
-                    total = int(
-                        response.headers.get(
-                            "Content-Length",
-                            0
-                        )
-                    )
+                    total = int( response.headers.get("Content-Length", 0))
 
                     downloaded = 0
                     chunk_size = 8192
 
-                    with open(
-                        tmp_path,
-                        "wb"
-                    ) as f:
-
+                    with open(tmp_path, "wb") as f:
                         while True:
-                            chunk = response.read(
-                                chunk_size
-                            )
+                            chunk = response.read(chunk_size)
                             if not chunk:
                                 break
 
-                            f.write(
-                                chunk
-                            )
-                            downloaded += len(
-                                chunk
-                            )
+                            f.write(chunk)
+                            downloaded += len(chunk)
 
                             if self.progress_callback:
                                 self.progress_callback(
@@ -551,56 +367,35 @@ class ModUpdater:
                                     total
                                 )
 
-                if os.path.getsize(
-                    tmp_path
-                ) < 1000:
+                if os.path.getsize(tmp_path) < 1000:
+                    raise Exception("Corrupt download")
 
-                    raise Exception(
-                        "Corrupt download"
-                    )
-
-                # Verify the downloaded file against the SHA-512 hash from Modrinth.
+                # Verify the downloaded file against
+                # the SHA-512 hash from Modrinth.
 
                 if remote_hash:
-
-                    downloaded_hash = self.get_file_hash(
-                        tmp_path
-                    )
-
+                    downloaded_hash = self.get_file_hash(tmp_path)
                     if downloaded_hash != remote_hash:
+                        raise Exception("Downloaded file failed hash verification")
 
-                        raise Exception(
-                            "Downloaded file failed hash verification"
-                        )
+                # Read the actual mod version from
+                # the downloaded JAR.
 
-                # Read the actual mod version from the downloaded JAR.
-
-                with zipfile.ZipFile(
-                    tmp_path,
-                    "r"
-                ) as jar:
-
+                with zipfile.ZipFile(tmp_path, "r") as jar:
                     data = json.loads(
-                        jar.read(
-                            "fabric.mod.json"
-                        )
+                        jar.read("fabric.mod.json")
                     )
+                downloaded_version = data.get("version")
 
-                downloaded_version = data.get(
-                    "version"
-                )
-
-                # The downloaded JAR contains the same mod version that is already installed.
+                # The downloaded JAR contains the same
+                # mod version that is already installed.
 
                 if downloaded_version == mod["version"]:
                     log(
                         f"[UP TO DATE] "
                         f"{mod_id} {mod['version']}"
                     )
-                    os.remove(
-                        tmp_path
-                    )
-
+                    os.remove(tmp_path)
                     continue
 
                 log(
@@ -609,38 +404,24 @@ class ModUpdater:
                     f"{downloaded_version}"
                 )
 
-                if os.path.exists(
-                    old_path
-                ):
-                    os.remove(
-                        old_path
-                    )
+                if os.path.exists(old_path):
+                    os.remove(old_path)
 
-                os.rename(
-                    tmp_path,
-                    new_path
-                )
+                os.rename(tmp_path, new_path)
 
-                log(
-                    f"[OK] Installed {new_name}"
-                )
+                log(f"[OK] Installed {new_name}")
 
             except Exception as e:
-                log(
-                    f"[ERROR] {mod_id}: {e}"
-                )
+                log(f"[ERROR] {mod_id}: {e}")
+
                 if on_fail:
+
                     on_fail(
                         mod_id,
                         str(e)
                     )
-                if os.path.exists(
-                    tmp_path
-                ):
-                    os.remove(
-                        tmp_path
-                    )
 
-        log(
-            "\nFinished"
-        )
+                if os.path.exists(tmp_path):
+                    os.remove(tmp_path)
+
+        log("\nFinished")
