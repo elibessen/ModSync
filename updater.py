@@ -512,49 +512,49 @@ class ModUpdater:
                     continue
 
             try:
-                response = urllib.request.urlopen(
+                with urllib.request.urlopen(
                     file_info["url"],
                     timeout=30
-                )
+                ) as response:
 
-                total = int(
-                    response.headers.get(
-                        "Content-Length",
-                        0
+                    total = int(
+                        response.headers.get(
+                            "Content-Length",
+                            0
+                        )
                     )
-                )
 
-                downloaded = 0
-                chunk_size = 8192
+                    downloaded = 0
+                    chunk_size = 8192
 
-                with response:
-                    with open(
-                        tmp_path,
-                        "wb"
-                    ) as f:
+                    with response:
+                        with open(
+                            tmp_path,
+                            "wb"
+                        ) as f:
 
-                        while True:
-                            chunk = response.read(
-                                chunk_size
-                            )
-
-                            if not chunk:
-                                break
-
-                            f.write(
-                                chunk
-                            )
-
-                            downloaded += len(
-                                chunk
-                            )
-
-                            if self.progress_callback:
-                                self.progress_callback(
-                                    mod_id,
-                                    downloaded,
-                                    total
+                            while True:
+                                chunk = response.read(
+                                    chunk_size
                                 )
+
+                                if not chunk:
+                                    break
+
+                                f.write(
+                                    chunk
+                                )
+
+                                downloaded += len(
+                                    chunk
+                                )
+
+                                if self.progress_callback:
+                                    self.progress_callback(
+                                        mod_id,
+                                        downloaded,
+                                        total
+                                    )
 
                 if os.path.getsize(
                     tmp_path
