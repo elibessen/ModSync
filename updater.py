@@ -453,7 +453,6 @@ class ModUpdater:
                     "files",
                     []
                 )
-
                 if files:
                     file_info = files[0]
 
@@ -474,23 +473,19 @@ class ModUpdater:
                 self.mods_folder,
                 old_file
             )
-
             new_name = file_info[
                 "filename"
             ]
-
             new_path = os.path.join(
                 self.mods_folder,
                 new_name
             )
-
             tmp_path = (
                 new_path
                 + ".tmp"
             )
 
-            # Check if the installed file is already
-            # exactly the same as the Modrinth file.
+            # Check if the installed file is already exactly the same as the Modrinth file.
 
             remote_hash = file_info.get(
                 "hashes",
@@ -514,7 +509,6 @@ class ModUpdater:
                     )
 
                     continue
-
             try:
                 with urllib.request.urlopen(
                     file_info["url"],
@@ -540,14 +534,12 @@ class ModUpdater:
                             chunk = response.read(
                                 chunk_size
                             )
-
                             if not chunk:
                                 break
 
                             f.write(
                                 chunk
                             )
-
                             downloaded += len(
                                 chunk
                             )
@@ -567,8 +559,7 @@ class ModUpdater:
                         "Corrupt download"
                     )
 
-                # Verify the downloaded file against
-                # the SHA-512 hash from Modrinth.
+                # Verify the downloaded file against the SHA-512 hash from Modrinth.
 
                 if remote_hash:
 
@@ -582,8 +573,7 @@ class ModUpdater:
                             "Downloaded file failed hash verification"
                         )
 
-                # Read the actual mod version from
-                # the downloaded JAR.
+                # Read the actual mod version from the downloaded JAR.
 
                 with zipfile.ZipFile(
                     tmp_path,
@@ -600,15 +590,13 @@ class ModUpdater:
                     "version"
                 )
 
-                # The downloaded JAR contains the same
-                # mod version that is already installed.
+                # The downloaded JAR contains the same mod version that is already installed.
 
                 if downloaded_version == mod["version"]:
                     log(
                         f"[UP TO DATE] "
                         f"{mod_id} {mod['version']}"
                     )
-
                     os.remove(
                         tmp_path
                     )
@@ -641,13 +629,11 @@ class ModUpdater:
                 log(
                     f"[ERROR] {mod_id}: {e}"
                 )
-
                 if on_fail:
                     on_fail(
                         mod_id,
                         str(e)
                     )
-
                 if os.path.exists(
                     tmp_path
                 ):
