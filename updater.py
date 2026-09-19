@@ -9,6 +9,7 @@ import hashlib
 
 API_BASE = "https://api.modrinth.com/v2"
 
+# For known differences that will currently break the search function
 MODRINTH_SLUGS_LOOKUP = {
     "betterblockentities": "better-block-entities"
 }
@@ -22,7 +23,6 @@ class ModUpdater:
         self.progress_callback = None
 
     # Version
-
     def set_version(self, version):
         self.mc_version = version
 
@@ -32,7 +32,6 @@ class ModUpdater:
             return os.path.join(os.environ["APPDATA"], ".minecraft")
 
         # WSL support
-
         if os.path.exists("/mnt/c/Users"):
             for user in os.listdir("/mnt/c/Users"):
                 path = os.path.join(
@@ -84,23 +83,18 @@ class ModUpdater:
                 version_lower = version_id.lower()
 
                 # Remove Fabric loader entries
-
                 if "fabric-loader" in version_lower: continue
 
                 # Remove OptiFine
-
                 if "optifine" in version_lower: continue
 
                 # Remove named snapshots
-
                 if "snapshot" in version_lower: continue
 
                 # Remove 23w31a etc
-
                 if re.match(r"\d+w\d+[a-z]", version_lower): continue
 
                 # Remove pre/rc
-
                 if re.search(r"-(pre|rc)\d*", version_lower): continue
 
                 versions.append(version_id)
@@ -109,7 +103,6 @@ class ModUpdater:
                 continue
 
         # Remove duplicates
-
         seen = set()
         clean = []
 
@@ -120,7 +113,6 @@ class ModUpdater:
         return clean
 
     # Path
-
     def detect_folder(self):
 
         root = self.get_minecraft_root()
@@ -133,7 +125,6 @@ class ModUpdater:
         )
 
     # Mod detection
-
     def detect_mods(self, log):
 
         mods = []
@@ -170,7 +161,6 @@ class ModUpdater:
         return mods
 
     # Modrinth search
-
     def search_project(self, mod_id, mod_name):
         if mod_id in self.cache:
             return self.cache[mod_id]
@@ -210,9 +200,6 @@ class ModUpdater:
                 )
 
             hits = data.get("hits", [])
-
-            print(f"\nSEARCH: {search_id}")
-            print(f"RESULTS: {len(hits)}")
 
             for project in hits:
 
@@ -272,7 +259,6 @@ class ModUpdater:
         return None
 
     # File hash
-
     def get_file_hash(self, file_path):
 
         sha512 = hashlib.sha512()
@@ -286,7 +272,6 @@ class ModUpdater:
         return sha512.hexdigest()
 
     # Update
-
     def update(self, log, on_fail=None):
         mods = self.detect_mods(log)
 
@@ -323,14 +308,12 @@ class ModUpdater:
             file_info = None
 
             # Find the primary file
-
             for file in latest.get("files", []):
                 if file.get("primary", False):
                     file_info = file
                     break
 
             # Fall back to the first file
-
             if not file_info:
                 files = latest.get("files", [])
                 if files:
@@ -347,9 +330,7 @@ class ModUpdater:
             new_path = os.path.join(self.mods_folder, new_name)
             tmp_path = new_path + ".tmp"
 
-            # Check if the installed file is already
-            # exactly the same as the Modrinth file.
-
+            # Check if the installed file is already exactly the same as the Modrinth file.
             remote_hash = file_info.get("hashes", {}).get("sha512")
 
             if remote_hash and os.path.exists(old_path):
@@ -387,52 +368,33 @@ class ModUpdater:
                 if os.path.getsize(tmp_path) < 1000:
                     raise Exception("Corrupt download")
 
-                # Verify the downloaded file against
-                # the SHA-512 hash from Modrinth.
-
+                # Verify the downloaded file against the SHA-512 hash from Modrinth.
                 if remote_hash:
                     downloaded_hash = self.get_file_hash(tmp_path)
                     if downloaded_hash != remote_hash:
                         raise Exception("Downloaded file failed hash verification")
 
-                # Read the actual mod version from
-                # the downloaded JAR.
-
+                # Read the actual mod version frome the downloaded JAR.
                 with zipfile.ZipFile(tmp_path, "r") as jar:
                     data = json.loads(
                         jar.read("fabric.mod.json")
                     )
-                downloaded_version = data.get("version")
-
-                # The downloaded JAR contains the same
-                # mod version that is already installed.
-
-                if downloaded_version == mod["version"]:
-                    log(
-                        f"[UP TO DATE] "
-                        f"{mod_id} {mod['version']}"
-                    )
-                    os.remove(tmp_path)
-                    continue
 
                 log(
                     f"[UPDATE] {mod_id} "
-                    f"{mod['version']} -> "
-                    f"{downloaded_version}"
+                    f"for Minecraft {self.mc_version}"
                 )
 
                 if os.path.exists(old_path):
                     os.remove(old_path)
 
                 os.rename(tmp_path, new_path)
-
                 log(f"[OK] Installed {new_name}")
 
             except Exception as e:
                 log(f"[ERROR] {mod_id}: {e}")
 
                 if on_fail:
-
                     on_fail(
                         mod_id,
                         str(e)
