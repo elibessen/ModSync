@@ -26,6 +26,8 @@ from updater import ModUpdater
 app_running = True
 progress_lines = {}
 
+APP_VERSION = "1.2.0"
+
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
 
@@ -49,7 +51,7 @@ updater = ModUpdater(
 )
 
 root = ctk.CTk()
-root.title("Fabric Mod Updater")
+root.title("ModSync v1.2.0")
 root.geometry("1100x650")
 root.minsize(900, 550)
 root.configure(fg_color="#0F0F0F")
@@ -107,9 +109,15 @@ title_frame.pack(
     pady=(30, 10)
 )
 
+title_row = ctk.CTkFrame(
+    title_frame,
+    fg_color="transparent"
+)
+
+title_row.pack()
 
 ctk.CTkLabel(
-    title_frame,
+    title_row,
     image=logo_img,
     text=""
 ).pack(
@@ -117,15 +125,22 @@ ctk.CTkLabel(
     padx=(0, 6)
 )
 
-
 ctk.CTkLabel(
-    title_frame,
+    title_row,
     text="Fabric Updater",
     font=("Segoe UI", 18, "bold")
 ).pack(
     side="left"
 )
 
+ctk.CTkLabel(
+    title_frame,
+    text=f"Version {APP_VERSION}",
+    font=("Segoe UI", 11),
+    text_color=("gray40", "gray60")
+).pack(
+    pady=(3, 0)
+)
 
 status = ctk.CTkLabel(
     sidebar,
