@@ -7,9 +7,7 @@ import sys
 import re
 import hashlib
 
-
 API_BASE = "https://api.modrinth.com/v2"
-
 
 class ModUpdater:
 
@@ -32,6 +30,7 @@ class ModUpdater:
             )
 
         # WSL support
+
         if os.path.exists("/mnt/c/Users"):
             for user in os.listdir("/mnt/c/Users"):
                 path = os.path.join(
@@ -86,6 +85,7 @@ class ModUpdater:
             version_id = None
 
             try:
+
                 if os.path.exists(
                     json_file
                 ):
@@ -159,6 +159,7 @@ class ModUpdater:
                 continue
 
         # Remove duplicates
+
         seen = set()
         clean = []
 
@@ -433,6 +434,7 @@ class ModUpdater:
             file_info = None
 
             # Find the primary file
+
             for file in latest.get(
                 "files",
                 []
@@ -445,6 +447,7 @@ class ModUpdater:
                     break
 
             # Fall back to the first file
+
             if not file_info:
                 files = latest.get(
                     "files",
@@ -488,6 +491,7 @@ class ModUpdater:
 
             # Check if the installed file is already
             # exactly the same as the Modrinth file.
+
             remote_hash = file_info.get(
                 "hashes",
                 {}
@@ -527,34 +531,33 @@ class ModUpdater:
                     downloaded = 0
                     chunk_size = 8192
 
-                    with response:
-                        with open(
-                            tmp_path,
-                            "wb"
-                        ) as f:
+                    with open(
+                        tmp_path,
+                        "wb"
+                    ) as f:
 
-                            while True:
-                                chunk = response.read(
-                                    chunk_size
+                        while True:
+                            chunk = response.read(
+                                chunk_size
+                            )
+
+                            if not chunk:
+                                break
+
+                            f.write(
+                                chunk
+                            )
+
+                            downloaded += len(
+                                chunk
+                            )
+
+                            if self.progress_callback:
+                                self.progress_callback(
+                                    mod_id,
+                                    downloaded,
+                                    total
                                 )
-
-                                if not chunk:
-                                    break
-
-                                f.write(
-                                    chunk
-                                )
-
-                                downloaded += len(
-                                    chunk
-                                )
-
-                                if self.progress_callback:
-                                    self.progress_callback(
-                                        mod_id,
-                                        downloaded,
-                                        total
-                                    )
 
                 if os.path.getsize(
                     tmp_path
@@ -564,8 +567,24 @@ class ModUpdater:
                         "Corrupt download"
                     )
 
+                # Verify the downloaded file against
+                # the SHA-512 hash from Modrinth.
+
+                if remote_hash:
+
+                    downloaded_hash = self.get_file_hash(
+                        tmp_path
+                    )
+
+                    if downloaded_hash != remote_hash:
+
+                        raise Exception(
+                            "Downloaded file failed hash verification"
+                        )
+
                 # Read the actual mod version from
                 # the downloaded JAR.
+
                 with zipfile.ZipFile(
                     tmp_path,
                     "r"
@@ -583,6 +602,7 @@ class ModUpdater:
 
                 # The downloaded JAR contains the same
                 # mod version that is already installed.
+
                 if downloaded_version == mod["version"]:
                     log(
                         f"[UP TO DATE] "
