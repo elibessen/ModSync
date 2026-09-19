@@ -9,8 +9,8 @@ import hashlib
 
 API_BASE = "https://api.modrinth.com/v2"
 
-MODRINTH_SLUGS = {
-    "betterclouds": "better-clouds"
+MODRINTH_SLUGS_LOOKUP = {
+    "betterblockentities": "better-block-entities"
 }
 
 class ModUpdater:
@@ -152,11 +152,13 @@ class ModUpdater:
                     )
 
                     mod_id = data.get("id")
+                    mod_name = data.get("name")
                     mod_version = data.get("version")
 
                     if mod_id:
                         mods.append({
                             "id": mod_id,
+                            "name": mod_name,
                             "version": mod_version,
                             "file": file
                         })
@@ -169,63 +171,78 @@ class ModUpdater:
 
     # Modrinth search
 
-    def search_project(self, mod_id):
-
+    def search_project(self, mod_id, mod_name):
         if mod_id in self.cache:
             return self.cache[mod_id]
-
-        project_slug = MODRINTH_SLUGS.get(mod_id)
-
-        if project_slug:
-            self.cache[mod_id] = project_slug
-            return project_slug
-
-        url = (
-            f"{API_BASE}/search?"
-            f"{urllib.parse.urlencode({'query': mod_id})}"
-        )
-
-        with urllib.request.urlopen(url, timeout=10) as r:
-            data = json.loads(r.read().decode())
-
-        hits = data.get("hits", [])
-
-        if not hits:
-
-            normalised_mod_id = mod_id.lower().replace("_", "-")
-            if normalised_mod_id != mod_id.lower():
-
-                url = (
-                    f"{API_BASE}/search?"
-                    f"{urllib.parse.urlencode({'query': normalised_mod_id})}"
-                )
-
-                with urllib.request.urlopen(url, timeout=10) as r:
-                    data = json.loads(
-                        r.read().decode()
-                    )
-                hits = data.get("hits", [])
-
-            if not hits:
-                return None
 
         mod_id_lower = mod_id.lower()
         normalised_mod_id = mod_id_lower.replace("_", "-")
 
-        for project in hits:
+        search_ids = [mod_id_lower]
 
-            slug = project.get("slug", "")
-            project_id = project.get("project_id")
+        if normalised_mod_id != mod_id_lower:
+            search_ids.append(normalised_mod_id)
 
-            if slug.lower() == mod_id_lower:
-                self.cache[mod_id] = project_id
-                return project_id
+        if mod_name:
+            search_ids.append(mod_name)
 
-            if slug.lower() == normalised_mod_id:
-                self.cache[mod_id] = project_id
-                return project_id
+        facets = json.dumps([
+            ["project_type:mod"],
+            ["categories:fabric"]
+        ])
 
-        return None
+        for search_id in search_ids:
+
+            params = urllib.parse.urlencode({
+                "query": search_id,
+                "facets": facets,
+                "limit": 20
+            })
+
+            url = (
+                f"{API_BASE}/search?"
+                f"{params}"
+            )
+
+            with urllib.request.urlopen(url, timeout=10) as r:
+                data = json.loads(
+                    r.read().decode()
+                )
+
+            hits = data.get("hits", [])
+
+            print(f"\nSEARCH: {search_id}")
+            print(f"RESULTS: {len(hits)}")
+
+            for project in hits:
+
+                slug = project.get("slug", "")
+                title = project.get("title", "")
+                project_id = project.get("project_id")
+                slug_lower = slug.lower()
+                title_lower = title.lower()
+
+                if slug_lower == mod_id_lower:
+                    self.cache[mod_id] = project_id
+                    return project_id
+
+                if slug_lower == normalised_mod_id:
+                    self.cache[mod_id] = project_id
+                    return project_id
+
+                if mod_name:
+                    if title_lower == mod_name.lower():
+                        self.cache[mod_id] = project_id
+                        return project_id
+
+                # Fall back to a known Modrinth slug.
+                project_slug = MODRINTH_SLUGS_LOOKUP.get(mod_id)
+
+                if project_slug:
+                    self.cache[mod_id] = project_slug
+                    return project_slug
+
+                return None
 
     def get_latest_version(self, project_id):
 
@@ -281,7 +298,7 @@ class ModUpdater:
             log(f"Checking {mod_id}")
 
             try:
-                project_id = self.search_project(mod_id)
+                project_id = self.search_project(mod_id, mod.get("name"))
             except Exception as e:
                 log(f"[ERROR] Searching {mod_id}: {e}")
                 continue
