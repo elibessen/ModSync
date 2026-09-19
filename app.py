@@ -1,17 +1,14 @@
 import ctypes
 
-# DIP fix
+# DPI fix
 
 try:
     ctypes.windll.shcore.SetProcessDpiAwareness(1)
-
 except:
     try:
         ctypes.windll.user32.SetProcessDPIAware()
-
     except:
         pass
-
 
 import customtkinter as ctk
 from PIL import Image
@@ -20,506 +17,488 @@ import threading
 import json
 import os
 import sys
-
 from updater import ModUpdater
-
-app_running = True
-progress_lines = {}
 
 APP_VERSION = "1.2.0"
 
-ctk.set_appearance_mode("dark")
-ctk.set_default_color_theme("blue")
+class ModSyncApp:
+    def __init__(self):
+        self.app_running = True
+        self.progress_lines = {}
+        self.failed_mods = []
 
-def resource_path(path):
-    if hasattr(sys, "_MEIPASS"):
-        return os.path.join(sys._MEIPASS, path)
+        ctk.set_appearance_mode("dark")
+        ctk.set_default_color_theme("blue")
 
-    return os.path.join(
-        os.path.abspath("."),
-        path
-    )
-
-with open(
-    resource_path("config.json"),
-    "r"
-) as f:
-    cfg = json.load(f)
-
-updater = ModUpdater(
-    cfg["minecraft_version"]
-)
-
-root = ctk.CTk()
-root.title("ModSync v1.2.0")
-root.geometry("1100x650")
-root.minsize(900, 550)
-root.configure(fg_color="#0F0F0F")
-
-
-def on_close():
-    global app_running
-
-    app_running = False
-    root.destroy()
-
-
-root.protocol(
-    "WM_DELETE_WINDOW",
-    on_close
-)
-
-
-if sys.platform.startswith("win"):
-    root.iconbitmap(
-        resource_path("mod_sync.ico")
-    )
-
-sidebar = ctk.CTkFrame(
-    root,
-    width=240,
-    fg_color="#151515"
-)
-
-sidebar.pack(
-    side="left",
-    fill="y"
-)
-
-sidebar.pack_propagate(False)
-
-
-logo_img = ctk.CTkImage(
-    light_image=Image.open(
-        resource_path("fabric_logo.png")
-    ),
-    dark_image=Image.open(
-        resource_path("fabric_logo.png")
-    ),
-    size=(28, 28)
-)
-
-
-title_frame = ctk.CTkFrame(
-    sidebar,
-    fg_color="transparent"
-)
-
-title_frame.pack(
-    pady=(30, 10)
-)
-
-title_row = ctk.CTkFrame(
-    title_frame,
-    fg_color="transparent"
-)
-
-title_row.pack()
-
-ctk.CTkLabel(
-    title_row,
-    image=logo_img,
-    text=""
-).pack(
-    side="left",
-    padx=(0, 6)
-)
-
-ctk.CTkLabel(
-    title_row,
-    text="Fabric Updater",
-    font=("Segoe UI", 18, "bold")
-).pack(
-    side="left"
-)
-
-ctk.CTkLabel(
-    title_frame,
-    text=f"Version {APP_VERSION}",
-    font=("Segoe UI", 11),
-    text_color=("gray40", "gray60")
-).pack(
-    pady=(3, 0)
-)
-
-status = ctk.CTkLabel(
-    sidebar,
-    text="Ready",
-    text_color="#00cc66"
-)
-
-status.pack(
-    pady=10
-)
-
-versions = updater.get_installed_versions()
-
-current = cfg["minecraft_version"]
-
-version_var = ctk.StringVar(
-    value=(
-        current
-        if current in versions
-        else (
-            versions[0]
-            if versions
-            else current
+        self.load_config()
+        self.updater = ModUpdater(
+            self.cfg["minecraft_version"]
         )
-    )
-)
-
-
-ctk.CTkOptionMenu(
-    sidebar,
-    values=(
-        versions
-        if versions
-        else [current]
-    ),
-    variable=version_var
-).pack(
-    pady=20,
-    padx=20
-)
-
-main = ctk.CTkFrame(
-    root,
-    fg_color="#0F0F0F"
-)
-
-main.pack(
-    side="right",
-    fill="both",
-    expand=True
-)
-
-log_font = ("Consolas", 9)
-
-logbox = tk.Text(
-    main,
-    font=log_font,
-    bg="#181818",
-    fg="#cccccc",
-    insertbackground="white",
-    bd=0
-)
-
-logbox.pack(
-    fill="both",
-    expand=True,
-    padx=20,
-    pady=(20, 10)
-)
-
-logbox.tag_config(
-    "ok",
-    foreground="#00cc66"
-)
-
-logbox.tag_config(
-    "skip",
-    foreground="#ff4444"
-)
-
-logbox.tag_config(
-    "error",
-    foreground="#ff4444"
-)
-
-logbox.tag_config(
-    "info",
-    foreground="#4da3ff"
-)
-
-logbox.tag_config(
-    "default",
-    foreground="#cccccc"
-)
-
-ctk.CTkLabel(
-    main,
-    text="Failed Mods",
-    font=("Segoe UI", 13, "bold")
-).pack(
-    anchor="w",
-    padx=20
-)
-
-
-failed_box = tk.Text(
-    main,
-    height=6,
-    font=log_font,
-    bg="#1f1f1f",
-    fg="#ff4444",
-    bd=0
-)
-
-failed_box.pack(
-    fill="x",
-    padx=20,
-    pady=(0, 15)
-)
-
-
-failed_mods = []
-
-def log(msg):
-    if not app_running:
-        return
-
-    def _write():
-        if not app_running:
-            return
-
-        logbox.insert(
-            "end",
-            msg + "\n"
+        self.root = ctk.CTk()
+        self.root.title(
+            f"Fabric Mod Updater v{APP_VERSION}"
+        )
+        self.root.geometry("1100x650")
+        self.root.minsize(900, 550)
+        self.root.configure(
+            fg_color="#0F0F0F"
+        )
+        self.root.protocol(
+            "WM_DELETE_WINDOW",
+            self.on_close
         )
 
-        tag = "default"
-
-        if "[OK]" in msg:
-            tag = "ok"
-
-        elif "[SKIP]" in msg:
-            tag = "skip"
-
-        elif "[ERROR]" in msg:
-            tag = "error"
-
-        elif "Checking" in msg:
-            tag = "info"
-
-        start = logbox.index(
-            "end-2l linestart"
-        )
-
-        end = logbox.index(
-            "end-2l lineend"
-        )
-
-        logbox.tag_add(
-            tag,
-            start,
-            end
-        )
-
-        logbox.see("end")
-
-    root.after(
-        0,
-        _write
-    )
-
-def update_progress(
-    mod_id,
-    current,
-    total
-):
-    if not app_running:
-        return
-
-    if total <= 0:
-        total = 1
-
-    percent = int(
-        (current / total) * 100
-    )
-
-    width = 22
-
-    filled = int(
-        (percent / 100) * width
-    )
-
-    bar = (
-        "#" * filled
-        + "-" * (width - filled)
-    )
-
-    text = (
-        f"{mod_id:<18} "
-        f"[{bar}] "
-        f"{percent}%"
-    )
-
-    def _write():
-        if not app_running:
-            return
-
-        if mod_id in progress_lines:
-            line = progress_lines[mod_id]
-
-            logbox.delete(
-                f"{line}.0",
-                f"{line}.end"
+        if sys.platform.startswith("win"):
+            self.root.iconbitmap(
+                self.resource_path("mod_sync.ico")
             )
 
-            logbox.insert(
-                f"{line}.0",
-                text
-            )
+        self.create_sidebar()
+        self.create_main()
 
-        else:
-            logbox.insert(
+        self.updater.progress_callback = (
+            self.update_progress
+        )
+
+    def resource_path(self, path):
+        if hasattr(sys, "_MEIPASS"):
+            return os.path.join(
+                sys._MEIPASS,
+                path
+            )
+        return os.path.join(
+            os.path.abspath("."),
+            path
+        )
+
+    def load_config(self):
+        with open(
+            self.resource_path("config.json"),
+            "r"
+        ) as f:
+
+            self.cfg = json.load(f)
+
+    def create_sidebar(self):
+        self.sidebar = ctk.CTkFrame(
+            self.root,
+            width=240,
+            fg_color="#151515"
+        )
+        self.sidebar.pack(
+            side="left",
+            fill="y"
+        )
+        self.sidebar.pack_propagate(False)
+
+        logo_img = ctk.CTkImage(
+            light_image=Image.open(
+                self.resource_path(
+                    "fabric_logo.png"
+                )
+            ),
+            dark_image=Image.open(
+                self.resource_path(
+                    "fabric_logo.png"
+                )
+            ),
+            size=(28, 28)
+        )
+
+        title_frame = ctk.CTkFrame(
+            self.sidebar,
+            fg_color="transparent"
+        )
+        title_frame.pack(
+            pady=(30, 10)
+        )
+        title_row = ctk.CTkFrame(
+            title_frame,
+            fg_color="transparent"
+        )
+        title_row.pack()
+
+        ctk.CTkLabel(
+            title_row,
+            image=logo_img,
+            text=""
+        ).pack(
+            side="left",
+            padx=(0, 6)
+        )
+
+        ctk.CTkLabel(
+            title_row,
+            text="Fabric Updater",
+            font=("Segoe UI", 18, "bold")
+        ).pack(
+            side="left"
+        )
+
+        ctk.CTkLabel(
+            title_frame,
+            text=f"Version {APP_VERSION}",
+            font=("Segoe UI", 11),
+            text_color=("gray40", "gray60")
+        ).pack(
+            pady=(3, 0)
+        )
+
+        self.status = ctk.CTkLabel(
+            self.sidebar,
+            text="Ready",
+            text_color="#00cc66"
+        )
+        self.status.pack(
+            pady=10
+        )
+
+        versions = (
+            self.updater.get_installed_versions()
+        )
+        current = self.cfg[
+            "minecraft_version"
+        ]
+
+        self.version_var = ctk.StringVar(
+            value=(
+                current
+                if current in versions
+                else (
+                    versions[0]
+                    if versions
+                    else current
+                )
+            )
+        )
+
+        ctk.CTkOptionMenu(
+            self.sidebar,
+            values=(
+                versions
+                if versions
+                else [current]
+            ),
+            variable=self.version_var
+        ).pack(
+            pady=20,
+            padx=20
+        )
+        self.button = ctk.CTkButton(
+            self.sidebar,
+            text="Update Mods",
+            command=self.start
+        )
+        self.button.pack(
+            pady=25,
+            padx=20
+        )
+
+        ctk.CTkFrame(
+            self.sidebar,
+            fg_color="transparent"
+        ).pack(
+            expand=True,
+            fill="both"
+        )
+
+        ctk.CTkButton(
+            self.sidebar,
+            text="Exit",
+            command=self.on_close
+        ).pack(
+            pady=15,
+            padx=20,
+            side="bottom"
+        )
+
+    def create_main(self):
+        self.main = ctk.CTkFrame(
+            self.root,
+            fg_color="#0F0F0F"
+        )
+
+        self.main.pack(
+            side="right",
+            fill="both",
+            expand=True
+        )
+
+        log_font = ("Consolas", 9)
+
+        self.logbox = tk.Text(
+            self.main,
+            font=log_font,
+            bg="#181818",
+            fg="#cccccc",
+            insertbackground="white",
+            bd=0
+        )
+
+        self.logbox.pack(
+            fill="both",
+            expand=True,
+            padx=20,
+            pady=(20, 10)
+        )
+        self.logbox.tag_config(
+            "ok",
+            foreground="#00cc66"
+        )
+        self.logbox.tag_config(
+            "skip",
+            foreground="#ff4444"
+        )
+        self.logbox.tag_config(
+            "error",
+            foreground="#ff4444"
+        )
+        self.logbox.tag_config(
+            "info",
+            foreground="#4da3ff"
+        )
+        self.logbox.tag_config(
+            "default",
+            foreground="#cccccc"
+        )
+
+        ctk.CTkLabel(
+            self.main,
+            text="Failed Mods",
+            font=("Segoe UI", 13, "bold")
+        ).pack(
+            anchor="w",
+            padx=20
+        )
+
+        self.failed_box = tk.Text(
+            self.main,
+            height=6,
+            font=log_font,
+            bg="#1f1f1f",
+            fg="#ff4444",
+            bd=0
+        )
+
+        self.failed_box.pack(
+            fill="x",
+            padx=20,
+            pady=(0, 15)
+        )
+
+    def on_close(self):
+        self.app_running = False
+        self.root.destroy()
+
+    def log(self, msg):
+        if not self.app_running:
+            return
+        def _write():
+            if not self.app_running:
+                return
+
+            self.logbox.insert(
                 "end",
-                text + "\n"
+                msg + "\n"
             )
 
-            progress_lines[mod_id] = int(
-                logbox.index(
-                    "end-2l"
-                ).split(".")[0]
+            tag = "default"
+
+            if "[OK]" in msg:
+                tag = "ok"
+            elif "[SKIP]" in msg:
+                tag = "skip"
+            elif "[ERROR]" in msg:
+                tag = "error"
+            elif "Checking" in msg:
+                tag = "info"
+
+            start = self.logbox.index(
+                "end-2l linestart"
+            )
+            end = self.logbox.index(
+                "end-2l lineend"
+            )
+            self.logbox.tag_add(
+                tag,
+                start,
+                end
+            )
+            self.logbox.see("end")
+        self.root.after(
+            0,
+            _write
+        )
+
+    def update_progress(
+        self,
+        mod_id,
+        current,
+        total
+    ):
+        if not self.app_running:
+            return
+        if total <= 0:
+            total = 1
+        percent = int(
+            (current / total) * 100
+        )
+        width = 22
+        filled = int(
+            (percent / 100) * width
+        )
+        bar = (
+            "#" * filled
+            + "-" * (width - filled)
+        )
+        text = (
+            f"{mod_id:<18} "
+            f"[{bar}] "
+            f"{percent}%"
+        )
+
+        def _write():
+            if not self.app_running:
+                return
+            if mod_id in self.progress_lines:
+                line = self.progress_lines[
+                    mod_id
+                ]
+                self.logbox.delete(
+                    f"{line}.0",
+                    f"{line}.end"
+                )
+                self.logbox.insert(
+                    f"{line}.0",
+                    text
+                )
+            else:
+                self.logbox.insert(
+                    "end",
+                    text + "\n"
+                )
+                self.progress_lines[
+                    mod_id
+                ] = int(
+                    self.logbox.index(
+                        "end-2l"
+                    ).split(".")[0]
+                )
+            self.logbox.see("end")
+        self.root.after(
+            0,
+            _write
+        )
+
+    def add_fail(
+        self,
+        mod,
+        reason
+    ):
+        self.failed_mods.append(
+            (mod, reason)
+        )
+
+        def _write():
+            if not self.app_running:
+                return
+            self.failed_box.insert(
+                "end",
+                f"{mod} → {reason}\n"
             )
 
-        logbox.see("end")
+            self.failed_box.see("end")
 
-    root.after(
-        0,
-        _write
-    )
-
-
-updater.progress_callback = update_progress
-
-def add_fail(
-    mod,
-    reason
-):
-    failed_mods.append(
-        (mod, reason)
-    )
-
-    def _write():
-        failed_box.insert(
-            "end",
-            f"{mod} → {reason}\n"
+        self.root.after(
+            0,
+            _write
         )
 
-        failed_box.see("end")
-
-    root.after(
-        0,
-        _write
-    )
-
-
-def clear_failed():
-    failed_mods.clear()
-
-    failed_box.delete(
-        "1.0",
-        "end"
-    )
-
-def set_status(
-    text,
-    color
-):
-    root.after(
-        0,
-        lambda: status.configure(
-            text=text,
-            text_color=color
+    def clear_failed(self):
+        self.failed_mods.clear()
+        self.failed_box.delete(
+            "1.0",
+            "end"
         )
-    )
-
-def run_update():
-    button.configure(
-        state="disabled"
-    )
-
-    clear_failed()
-
-    progress_lines.clear()
-
-    logbox.delete(
-        "1.0",
-        "end"
-    )
-
-    updater.set_version(
-        version_var.get()
-    )
-
-    set_status(
-        f"Updating {version_var.get()}",
-        "#ffaa00"
-    )
-
-    log(
-        "Starting update..."
-    )
-
-    try:
-        updater.update(
-            log,
-            on_fail=add_fail
+    def set_status(
+        self,
+        text,
+        color
+    ):
+        def _update():
+            if not self.app_running:
+                return
+            self.status.configure(
+                text=text,
+                text_color=color
+            )
+        self.root.after(
+            0,
+            _update
         )
 
-        set_status(
-            "Finished",
-            "#00cc66"
+    def run_update(self):
+        try:
+            self.updater.update(
+                self.log,
+                on_fail=self.add_fail
+            )
+            self.set_status(
+                "Finished",
+                "#00cc66"
+            )
+            self.log(
+                "Done"
+            )
+        except Exception as e:
+            self.set_status(
+                "Error",
+                "#ff4444"
+            )
+
+            self.log(
+                f"[ERROR] {e}"
+            )
+
+        self.root.after(
+            0,
+            lambda: self.button.configure(
+                state="normal"
+            )
         )
 
-        log(
-            "Done"
+    def start(self):
+        if not self.app_running:
+            return
+        self.button.configure(
+            state="disabled"
         )
-
-    except Exception as e:
-        set_status(
-            "Error",
-            "#ff4444"
+        self.clear_failed()
+        self.progress_lines.clear()
+        self.logbox.delete(
+            "1.0",
+            "end"
         )
-
-        log(
-            f"[ERROR] {e}"
+        self.updater.set_version(
+            self.version_var.get()
         )
+        self.set_status(
+            f"Updating {self.version_var.get()}",
+            "#ffaa00"
+        )
+        self.log(
+            "Starting update..."
+        )
+        threading.Thread(
+            target=self.run_update,
+            daemon=True
+        ).start()
+    def run(self):
+        self.root.mainloop()
 
-    button.configure(
-        state="normal"
-    )
+def main():
+    app = ModSyncApp()
+    app.run()
 
-
-def start():
-    if not app_running:
-        return
-
-    threading.Thread(
-        target=run_update,
-        daemon=True
-    ).start()
-
-button = ctk.CTkButton(
-    sidebar,
-    text="Update Mods",
-    command=start
-)
-
-button.pack(
-    pady=25,
-    padx=20
-)
-
-
-ctk.CTkFrame(
-    sidebar,
-    fg_color="transparent"
-).pack(
-    expand=True,
-    fill="both"
-)
-
-
-ctk.CTkButton(
-    sidebar,
-    text="Exit",
-    command=on_close
-).pack(
-    pady=15,
-    padx=20,
-    side="bottom"
-)
-
-root.mainloop()
+if __name__ == "__main__":
+    main()
