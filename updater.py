@@ -254,9 +254,9 @@ class ModUpdater:
                             f"Detected: {mod_id}"
                         )
 
-            except Exception:
+            except Exception as e:
                 log(
-                    f"Skipped {file}"
+                    f"Skipped {file}: {e}"
                 )
 
         return mods
